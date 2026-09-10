@@ -1,0 +1,37 @@
+# Publishes the company site to GitHub Pages.
+#
+# The site is plain static HTML with no build step, so the workflow only uploads the repository and
+# tells Pages to serve it. Kept as an Actions workflow rather than the "deploy from a branch" setting
+# because that is what the repository is configured for, and because a workflow leaves a record of
+# every publish.
+name: Deploy site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time. A second push while the first is still publishing would otherwise race it.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4
